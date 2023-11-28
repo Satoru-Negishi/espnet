@@ -1,0 +1,40 @@
+STEP1
+/dataディレクトリをコピー・ペースト
+
+STEP2
+
+./run.sh \
+    --stage 2 \
+    --stop-stage 5 --use_xvector true \
+    \
+    --g2p pyopenjtalk_prosody \
+    --min_wav_duration 0.38 \
+    --fs 22050 \
+    --n_fft 1024 \
+    --n_shift 256 \
+    --dumpdir dump/22k \
+    --win_length null \
+    --tts_task gan_tts \
+    --feats_extract linear_spectrogram \
+    --feats_normalize none \
+    --train_config ./conf/tuning/finetune_vits.yaml
+
+./run.sh \
+    --ngpu 1 \
+    --stage 6 --use_xvector true \
+    \
+    --g2p pyopenjtalk_prosody \
+    --min_wav_duration 0.38 \
+    --fs 22050 \
+    --n_fft 1024 \
+    --n_shift 256 \
+    --dumpdir dump/22k \
+    --win_length null \
+    --tts_task gan_tts \
+    --feats_extract linear_spectrogram \
+    --feats_normalize none \
+    --train_config ./conf/tuning/finetune_vits.yaml \
+    --train_args "--init_param ${PRETRAINED_MODEL_FILE}" \
+    --tag finetune_xvector_vits_raw_phn_jaconv_pyopenjtalk_prosody \
+    --inference_model train.total_count.ave_10best.pth
+
