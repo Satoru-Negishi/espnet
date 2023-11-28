@@ -551,6 +551,7 @@ class VITS(AbsGANTTS):
         alpha: float = 1.0,
         max_len: Optional[int] = None,
         use_teacher_forcing: bool = False,
+        speech = None,
     ) -> Dict[str, torch.Tensor]:
         """Run inference.
 
