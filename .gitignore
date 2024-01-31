@@ -51,6 +51,8 @@ egs*/fisher_callhome_spanish/*/local/mapping*
 # negishi recipe
 egs2/jvs_*/*/Xvector_Bert/data
 egs2/jvs_*/*/Xvector_Bert/output
+egs2/jvs_*/*/Xvector_Bert/data
+
 
 
 # tools related

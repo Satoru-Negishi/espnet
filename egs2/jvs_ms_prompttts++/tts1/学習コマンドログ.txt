@@ -1,0 +1,89 @@
+11/27
+①
+./run.sh \
+    --stage 5\
+    \
+    --g2p pyopenjtalk_prosody \
+    --min_wav_duration 0.38 \
+    --fs 22050 \
+    --n_fft 1024 \
+    --n_shift 256 \
+    --dumpdir dump/22k \
+    --win_length null \
+    --tts_task tts \
+    --feats_extract linear_spectrogram \
+    --feats_normalize none \
+    --train_config ./conf/tuning/train_gst_conformer_fastspeech2.yaml \
+    --teacher_dumpdir exp/tts_finetune_gst_fastspeech2_raw_phn_jaconv_pyopenjtalk_prosody/decode_use_teacher_forcingtrue_train.loss.ave \
+    --tts_stats_dir exp/tts_finetune_gst_fastspeech2_raw_phn_jaconv_pyopenjtalk_prosody/decode_use_teacher_forcingtrue_train.loss.ave/stats \
+    --write_collected_feats true
+
+※vitsの方でやっていたモデルのダウンロードなどは行わない
+
+②
+./run.sh \
+    --ngpu 1 \
+    --stage 6 \
+    --g2p pyopenjtalk_prosody \
+    --min_wav_duration 0.38 \
+    --fs 22050 \
+    --n_fft 1024 \
+    --n_shift 256 \
+    --dumpdir dump/22k \
+    --win_length null \
+    --tts_task tts \
+    --feats_extract linear_spectrogram \
+    --feats_normalize none \
+    --train_config ./conf/tuning/train_gst_conformer_fastspeech2.yaml \
+    --tag finetune_gst_fastspeech2_raw_phn_jaconv_pyopenjtalk_prosody \
+    --inference_model train.total_count.ave_10best.pth \
+    --teacher_dumpdir exp/tts_finetune_gst_fastspeech2_raw_phn_jaconv_pyopenjtalk_prosody/decode_use_teacher_forcingtrue_train.loss.ave　\
+
+
+--------------------------------------------------------------------------------
+12/11 vocoder関係で不具合が出たため学習し直し→
+
+./run.sh --stage 7 \
+    --use_xvector true \
+    --tts_exp exp/tts_finetune_xvector_vits_raw_phn_jaconv_pyopenjtalk_prosody\
+    --inference_args "--use_teacher_forcing true" \
+    --test_sets "tr_no_dev dev eval1" \
+    --dumpdir dump/22k \
+    --inference_model train.total_count.ave_10best.pth
+
+
+
+./run.sh --stage 5 \
+    --g2p pyopenjtalk_prosody \
+    --train_config ./conf/tuning/train_gst_conformer_fastspeech2.yaml \
+    --teacher_dumpdir exp/tts_finetune_xvector_vits_raw_phn_jaconv_pyopenjtalk_prosody/decode_use_teacher_forcingtrue_train.total_count.ave_10best \
+    --tts_stats_dir exp/tts_finetune_xvector_vits_raw_phn_jaconv_pyopenjtalk_prosody/decode_use_teacher_forcingtrue_train.total_count.ave_10best/stats \
+    --write_collected_feats true \
+    --min_wav_duration 0.38 \
+    --fs 22050 \
+    --n_fft 1024 \
+    --n_shift 256 \
+    --win_length null \
+    --dumpdir dump/22k \
+    --feats_extract linear_spectrogram \
+    --feats_normalize none
+
+--------------------------------------------------------------------------------
+12/17 stage7で使用するモデルの変更
+②
+./run.sh --stage 7 \
+    --tts_exp exp/tts_train_transformer_raw_phn_jaconv_pyopenjtalk_prosody \
+    --inference_args "--use_teacher_forcing true" \
+    --test_sets "tr_no_dev dev eval1" \
+    --dumpdir dump/22k \
+    --inference_model train.loss.ave_5best.pth
+
+③
+./run.sh --stage 5 \
+    --g2p pyopenjtalk_prosody \
+    --train_config ./conf/tuning/finetune_fastspeech2.yaml \
+    --teacher_dumpdir exp/tts_train_transformer_raw_phn_jaconv_pyopenjtalk_prosody/decode_use_teacher_forcingtrue_train.loss.ave_5best \
+    --tts_stats_dir exp/tts_train_transformer_raw_phn_jaconv_pyopenjtalk_prosody/decode_use_teacher_forcingtrue_train.loss.ave_5best/stats \
+    --write_collected_feats true \
+    --dumpdir dump/22k
+--------------------------------------------------------------------------------

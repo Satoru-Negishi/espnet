@@ -14,10 +14,12 @@ from transformers import Trainer
 from transformers import EarlyStoppingCallback
 from transformers import AutoModel, AutoTokenizer
 from torch.utils.data import DataLoader
+from torchmetrics.regression import CosineSimilarity
 from tqdm import tqdm
 import sys
 import datetime
 import ast
+
 
 """
 参考サイト
@@ -27,7 +29,9 @@ Transformer Trainerクラス：https://qiita.com/m__k/items/2c4e476d7ac81a3a44af
 
 """
 
-d_today_utc = datetime.datetime.utcnow().date()
+# d_today_utc = datetime.datetime.utcnow().date()
+current_datetime = datetime.datetime.now()
+d_today_utc = current_datetime.strftime("%Y-%m-%d_%H%M%S")
 
 input_data = './data/id_and_NL_emb.csv'
 model_output = f'./output/model_{d_today_utc}'
@@ -139,10 +143,11 @@ class BERTClass(torch.nn.Module):
         output_3r = self.relu2(output_3)
         output = self.l4(output_3r)
         
-
+        y = torch.autograd.Variable(torch.Tensor(output.size(0)).cuda().fill_(1.0))
         loss = None
+
         if list is not None and self.loss_function is not None:
-            loss = self.loss_function(output, list)
+            loss = self.loss_function(output, list,y)
 
         attentions=None
         if output_attentions:
@@ -160,6 +165,7 @@ class BERTClass(torch.nn.Module):
             hidden_states=hidden_states
         )
 
+# loss_fct = CosineSimilarity(reduction='mean')
 loss_fct = torch.nn.CosineEmbeddingLoss()
 pretrained_model = AutoModel.from_pretrained("cl-tohoku/bert-base-japanese-whole-word-masking")
 model = BERTClass(pretrained_model, num_labels=vector_size ,loss_function=loss_fct)
@@ -199,7 +205,9 @@ trainer = Trainer(
 trainer.train(ignore_keys_for_eval=['last_hidden_state', 'hidden_states', 'attentions'])
 
 trainer.save_model()
+print("モデル保存完了")
 trainer.save_state()
+print("トレーニング状態保存完了")
 
 config = model.config
 config.num_labels = vector_size

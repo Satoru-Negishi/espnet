@@ -10,7 +10,7 @@ from espnet2.tts.feats_extract.linear_spectrogram import LinearSpectrogram
 from espnet2.tts.feats_extract.log_mel_fbank import LogMelFbank
 from espnet2.tts.feats_extract.log_spectrogram import LogSpectrogram
 
-
+import kaldiio
 import argparse
 from pathlib import Path
 import os
@@ -20,6 +20,7 @@ from tqdm import tqdm
 import sys
 import csv
 
+from pprint import pprint
 import soundfile
 """
 プログラムの大枠
@@ -66,7 +67,7 @@ class GST(object):
         # idim: int,
         odim: int,
         feats_extract: Optional[AbsFeatsExtract],
-        adim: int = 384,
+        adim: int = 256,
         gst_tokens: int = 10,
         gst_heads: int = 4,
         gst_conv_layers: int = 6,
@@ -114,6 +115,7 @@ class GST(object):
         else:
             # Use precalculated feats (feats_type != raw case)
             feats, feats_lengths = speech, speech_lengths
+        feats = self.gst(feats)
         feats_dict = dict(feats=feats, feats_lengths=feats_lengths)
 
         return feats_dict
@@ -145,52 +147,45 @@ def main(argv):
             spk2utt[details[0]] = details[1:]
 
     wav_scp = SoundScpReader(os.path.join(args.in_folder, "wav.scp"), np.float32)
-    # os.makedirs(args.out_folder, exist_ok=True)
-    # writer_utt = kaldiio.WriteHelper(
-    #     "ark,scp:{0}/xvector.ark,{0}/xvector.scp".format(args.out_folder)
-    # )
-    # writer_spk = kaldiio.WriteHelper(
-    #     "ark,scp:{0}/spk_xvector.ark,{0}/spk_xvector.scp".format(args.out_folder)
-    # )
-    writer_spk = {}
+    os.makedirs(args.out_folder, exist_ok=True)
+    writer_utt = kaldiio.WriteHelper(
+        "ark,scp:{0}/xvector.ark,{0}/xvector.scp".format(args.out_folder)
+    )
+    writer_spk = kaldiio.WriteHelper(
+        "ark,scp:{0}/spk_xvector.ark,{0}/spk_xvector.scp".format(args.out_folder)
+    )
     #feats_extract
     """
     Reference Code:
         /espnet/espnet2/tasks/tts.py 295~ 
     """
     # 1. feats_extract
-    feats_extract_class = LogMelFbank()
+    feats_extract_class = LinearSpectrogram()
     # feats_extract = feats_extract_class(**args.feats_extract_conf)
     odim = feats_extract_class.output_size()
 
     gst_encoder = GST(odim=odim,feats_extract=feats_extract_class)
-
     for speaker in tqdm(spk2utt):
         style_embeds = []
-        for utt in spk2utt[speaker]:            
+        for utt in spk2utt[speaker]:
             rate, audio = wav_scp[utt]
             speech, speech_lengths = sound_reader(rate, audio)
-            # # # Style Embedding
-            # embeds = gst_encoder(torch.tensor(speech), torch.tensor(speech_lengths))
-            # # writer_utt[utt] = np.squeeze(embeds)
-            # style_embeds.append(embeds['feats'].tolist())
-        sys.exit(0)
+            # Style Embedding
+            embeds = gst_encoder(torch.tensor(speech), torch.tensor(speech_lengths))
+            # print(type(embeds))
+            writer_utt[utt] = np.squeeze(embeds["feats"].detach().numpy())
+            style_embeds.append(embeds['feats'].tolist())
+
         # Speaker Normalization
-        # print(style_embeds[0][0][1])
-        #TODO:
-        # -style_emeadsのサイズの問題によりnp.meanができない問題発生中，次回修正
-        # stack_embeds = np.stack(style_embeds, 0)
-        # print(stack_embeds)
-        sys.exit(0)
         embeds = np.mean(np.stack(style_embeds, 0), 0)
         writer_spk[speaker] = embeds
 
-    # writer_utt.close()
-    # writer_spk.close()
-    with open("/mnt/data/users/snegishi/M2/Satoru-Negishi/espnet/egs2/jvs_promptttspp/writer_spk.csv", "w") as f:
-        writer = csv.writer(f)
-        for k, v in writer_spk.items():
-            writer.writerow([k, v])
+    writer_utt.close()
+    writer_spk.close()
+    # with open("./writer_spk.csv", "w") as f:
+    #     writer = csv.writer(f)
+    #     for k, v in writer_spk.items():
+    #         writer.writerow([k, v])
     
 if __name__ == "__main__":
     main(sys.argv[1:])

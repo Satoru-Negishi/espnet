@@ -312,6 +312,11 @@ class VITSGenerator(torch.nn.Module):
         x, m_p, logs_p, x_mask = self.text_encoder(text, text_lengths)
 
         # calculate global conditioning
+        # print("===============")
+        # print("sids", sids)
+        # print("len(sids)", len(sids))
+        # print("=================")
+        
         g = None
         if self.spks is not None:
             # speaker one-hot vector embedding: (B, global_channels, 1)

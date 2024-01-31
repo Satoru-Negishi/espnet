@@ -28,6 +28,7 @@ from espnet2.gan_tts.utils import get_segments
 from espnet2.gan_tts.vits.generator import VITSGenerator
 from espnet2.gan_tts.vits.loss import KLDivergenceLoss
 from espnet2.torch_utils.device_funcs import force_gatherable
+import torch.nn.functional as F
 
 AVAILABLE_GENERATERS = {
     "vits_generator": VITSGenerator,
@@ -264,6 +265,7 @@ class VITS(AbsGANTTS):
         self.spks = self.generator.spks
         self.langs = self.generator.langs
         self.spk_embed_dim = self.generator.spk_embed_dim
+        self.eos = idim -1
 
     @property
     def require_raw_speech(self):
@@ -598,6 +600,8 @@ class VITS(AbsGANTTS):
                 dtype=torch.long,
                 device=feats.device,
             )
+            text = F.pad(text, [0, 1], "constant", self.eos)
+            text_lengths += 1
             wav, att_w, dur = self.generator.inference(
                 text=text,
                 text_lengths=text_lengths,

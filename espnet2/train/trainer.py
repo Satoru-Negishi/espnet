@@ -579,7 +579,7 @@ class Trainer:
                             "model.module is not found (This should be a bug.)"
                         )
                 del _model
-
+            # print("batch["]", batch)
             with autocast(
                 scaler is not None,
                 **autocast_args,

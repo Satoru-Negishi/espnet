@@ -1,0 +1,31 @@
+./run.sh \
+    --stage 2 \
+    --stop-stage 4 --use_sid true \
+    \
+    --g2p pyopenjtalk_prosody \
+    --min_wav_duration 0.38 \
+    --fs 22050 \
+    --n_fft 1024 \
+    --n_shift 256 \
+    --dumpdir dump/22k \
+    --win_length null \
+    --tts_task gan_tts \
+    --feats_extract linear_spectrogram \
+    --feats_normalize none \
+    --train_config ./conf/tuning/finetune_vits.yaml
+
+ーーーーーーー
+
+./run.sh \
+    --stage 5 --use_sid true \
+    --g2p pyopenjtalk_prosody \
+    --min_wav_duration 0.38 \
+    --fs 22050 \
+    --n_fft 1024 \
+    --n_shift 256 \
+    --dumpdir dump/22k \
+    --win_length null \
+    --tts_task gan_tts \
+    --feats_extract linear_spectrogram \
+    --feats_normalize none \
+    --train_config ./conf/tuning/finetune_vits.yaml

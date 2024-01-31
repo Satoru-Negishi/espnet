@@ -3,3 +3,6 @@ downloads/
 dump/
 exp/
 xvectors.tgz
+PromptEncoder/data/
+PromptEncoder/output/
+style_embedding/
